@@ -8,6 +8,11 @@ mongoose.connect(process.env.MONGO_URI)
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import dns from 'dns';
+import { URL } from 'url';
+
+
+
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -32,17 +37,44 @@ app.post('/api/shorturl', async function(req,res){
 
   const url = req.body.url;
 
+
+
+
+  const regex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/[\w-]*)*\/?$/;
+
   
 
-  console.log('url form body '+url);
-  let returned_url  = await urlShortner(url);
-  console.log(returned_url);
-  res.json({ original_url: url, short_url: returned_url });
+  try {
 
+    if(!url.startsWith('http://') && !url.startsWith('https://')) {
+      throw new Error('URL must start with http:// or https://');
+    }
+    URL.canParse(url)
+    new URL(url); // This will throw an error if the URL is invalid
+    // dns.lookup(url)
+    console.log('url form body '+url);
+    let returned_url  = await urlShortner(url);
+    console.log(returned_url);
+    res.json({ original_url: url, short_url: returned_url });
+
+
+  } catch (error) {
+    console.error('Invalid URL:');
+    res.json({ error: 'invalid url' });
+  }
+
+   
+
+
+
+    
 });
 
 app.get('/api/shorturl/:shortUrl',async function(req, res) {
   const shortUrl = req.params.shortUrl.trim();
+
+
+
 
   console.log('shortUrl from params: ' + shortUrl);
 
